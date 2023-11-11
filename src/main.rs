@@ -1,11 +1,13 @@
 
 use clap::{command, arg};
+use dotenv;
 
 mod lexer;
 mod ast;
 mod parser;
 
 fn main() {
+    dotenv::dotenv().ok();
     env_logger::init();
     let matches = command!()
         .subcommands([
