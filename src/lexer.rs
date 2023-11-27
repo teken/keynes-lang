@@ -1,4 +1,3 @@
-use std::{thread::sleep, time::Duration};
 use log::*;
 
 
@@ -7,7 +6,7 @@ pub enum Token {
     ILLEGAL(String),
     EOF,
 
-    IDENT(String),
+    IDENTIFIER(String),
     INTEGER(String),
 
     ASSIGN,
@@ -20,8 +19,9 @@ pub enum Token {
     LESS_THAN,
     LESS_THAN_EQUAL,
 
-
-
+    BANG,
+    TRUE, 
+    FALSE,
     RANGE,
 
     PLUS,
@@ -30,7 +30,7 @@ pub enum Token {
     DIVIDE,
 
     COMMA,
-    SEMICOLEN,
+    SEMICOLON,
 
     LPAREN,
     RPAREN,
@@ -43,6 +43,8 @@ pub enum Token {
     RETURN,
     MUT,
     LET,
+    IF,
+    ELSE,
 
     RUN,
     SPAWN,
@@ -128,6 +130,7 @@ impl Lexer {
                 self.read_char();
                 Token::NOT_EQUAL
             },
+            ('!', _) => Token::BANG,
             ('=', '=') => {
                 self.read_char();
                 Token::EQUAL
@@ -156,7 +159,7 @@ impl Lexer {
             ('*', _) => Token::MULTIPLY,
             ('/', _) => Token::DIVIDE,
 
-            (';', _) => Token::SEMICOLEN,
+            (';', _) => Token::SEMICOLON,
             (',', _) => Token::COMMA,
 
             ('(', _) => Token::LPAREN,
@@ -219,6 +222,10 @@ fn lookup_ident(ident: String) -> Token {
         "return" => Token::RETURN,
         "run" => Token::RUN,
         "spawn" => Token::SPAWN,
-        _ => Token::IDENT(ident),
+        "true" => Token::TRUE,
+        "false" => Token::FALSE,
+        "if" => Token::IF,
+        "else" => Token::ELSE,
+        _ => Token::IDENTIFIER(ident),
     }
 }

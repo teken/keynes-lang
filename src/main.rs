@@ -13,6 +13,7 @@ fn main() {
         .subcommands([
             command!("lexer").arg(arg!(<input>)),
             command!("parser").arg(arg!(<input>)),
+            command!("run").arg(arg!(<input>)),
         ]).get_matches();
 
     match matches.subcommand() {
@@ -25,6 +26,11 @@ fn main() {
             parser_single(input);
         } else {
             parser_repl();
+        },
+        Some(("run", sub_m)) => if let Some(input) = sub_m.get_one::<String>("input") {
+            println!("Running {}", input);
+        } else {
+            println!("No input file specified");
         },
         _ => println!("No subcommand was used"),
     }
