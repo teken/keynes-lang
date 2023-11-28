@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use log::*;
 
 
@@ -48,6 +50,37 @@ pub enum Token {
 
     RUN,
     SPAWN,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut token = String::new();
+        match self {
+            Token::ASSIGN => token.push_str("="),
+            Token::EQUAL => token.push_str("=="),
+            Token::NOT_EQUAL => token.push_str("!="),
+            Token::GREATER_THAN => token.push_str(">"),
+            Token::GREATER_THAN_EQUAL => token.push_str(">="),
+            Token::LESS_THAN => token.push_str("<"),
+            Token::LESS_THAN_EQUAL => token.push_str("<="),
+            Token::BANG => token.push_str("!"),
+            Token::RANGE => token.push_str(".."),
+            Token::PLUS => token.push_str("+"),
+            Token::MINUS => token.push_str("-"),
+            Token::MULTIPLY => token.push_str("*"),
+            Token::DIVIDE => token.push_str("/"),
+            Token::COMMA => token.push_str(","),
+            Token::SEMICOLON => token.push_str(";"),
+            Token::LPAREN => token.push_str("("),
+            Token::RPAREN => token.push_str(")"),
+            Token::LBRACE => token.push_str("{"),
+            Token::RBRACE => token.push_str("}"),
+            Token::LBRACKET => token.push_str("["),
+            Token::RBRACKET => token.push_str("]"),
+            _ => token.push_str(format!("{:?}", self).as_str()),
+        }
+        write!(f, "{}", token)
+    }
 }
 
 #[derive(Default)]

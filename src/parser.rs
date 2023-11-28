@@ -27,6 +27,7 @@ impl <'a> Parser<'a> {
     }
 
     pub fn parse_program(&mut self) -> Program {
+        trace!("parse_program");
         let mut program = Program::new();
         while self.cur_token != Token::EOF {
             let stmt = self.parse_statement();
@@ -39,7 +40,8 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
-       let statment = match self.cur_token {
+        trace!("parse_statement: {:?}", self.cur_token);
+        let statment = match self.cur_token {
             Token::RETURN => self.parse_return_statement(),
             Token::LET => self.parse_let_statement(),
             Token::RUN => todo!(),
@@ -47,7 +49,7 @@ impl <'a> Parser<'a> {
             _ => self.parse_expression_statement(),
         };
 
-        trace!("parse_statement: {:?}", statment);
+        trace!("parse_statement completed: {:?}", statment);
         statment
     }
 
@@ -136,6 +138,9 @@ impl <'a> Parser<'a> {
             Token::INTEGER(_) => self.parse_integer_literal(),
             Token::LPAREN => self.parse_grouped_expression(),
             Token::IF => self.parse_if_expression(),
+            Token::BANG | Token::MINUS => self.parse_prefix_expression(),
+            Token::FUNCTION => self.parse_function_literial(),
+            Token::TRUE | Token::FALSE => self.parse_boolean_literal(),
             // Token::LPAREN => self.parse_call_expression(),
             _ => None,
         };
@@ -148,7 +153,6 @@ impl <'a> Parser<'a> {
         let prefix = prefix_w.unwrap();
 
         let mut left_exp = Some(prefix.clone());
-
 
         while !self.peek_token_is(&Token::SEMICOLON) && precedence < self.peek_token.clone().into() {
             let infix = match self.peek_token.clone() {
@@ -164,9 +168,7 @@ impl <'a> Parser<'a> {
             };
 
             if infix.is_none() {
-                trace!("parse_expression: infix failed");
-                self.errors.push(format!("unhandled infix parse for {:?}", self.cur_token));
-                return None;
+                return left_exp;
             }
 
             self.next_token();
@@ -223,6 +225,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_integer_literal(&mut self) -> Option<Box<dyn Expression>> { 
+        trace!("parse_integer_literal: {:?}", self.cur_token);
         let value = match self.cur_token.clone() {
             Token::INTEGER(val) => Some(val),
             _ => return None,
@@ -231,7 +234,7 @@ impl <'a> Parser<'a> {
             self.errors.push(format!("could not parse {:?} as integer", self.cur_token));
             return None;
         }
-        trace!("parse_integer_literal: {:?}", value);
+
         let parsed_val = value.unwrap().parse::<i64>();
         if parsed_val.is_err() {
             self.errors.push(format!("could not parse {:?} as integer", self.cur_token));
@@ -244,6 +247,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_identifier_expression(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_identifier_expression: {:?}", self.cur_token);
         let val = match self.cur_token.clone() {
             Token::IDENTIFIER(val) => Some(val),
             _ => return None,
@@ -252,13 +256,14 @@ impl <'a> Parser<'a> {
             self.errors.push(format!("could not parse {:?} as identifier", self.cur_token));
             return None;
         }
-        trace!("parse_token_literal: {:?}", val);
+
         Some(Box::new(IdentifierLiteral {
             token: self.cur_token.clone(),
         }))
     }
 
     fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_prefix_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
 
         self.next_token();
@@ -277,9 +282,27 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_infix_expression(&mut self, left: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+        trace!("parse_infix_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
-        let precedence = self.cur_token.clone().into();
+        let precedence: Precedence = self.cur_token.clone().into();
         self.next_token();
+        let token_as_infix = token.clone().try_into();
+        if token_as_infix.is_err() {
+            self.errors.push(format!("expected infix operator, got {:?}", token));
+            return None;
+        }
+        // let right =  match token_as_infix.clone().unwrap() {
+        //     InfixOperator::PLUS |
+        //     InfixOperator::MINUS |
+        //     InfixOperator::MULTIPLY |
+        //     InfixOperator::DIVIDE |
+        //     InfixOperator::EQUAL |
+        //     InfixOperator::NOT_EQUAL |
+        //     InfixOperator::LESS_THAN |
+        //     InfixOperator::GREATER_THAN => self.parse_expression(precedence.clone().reduce()),
+        //     _ => self.parse_expression(precedence),
+            
+        // };
         let right = self.parse_expression(precedence);
         if right.is_none() {
             self.errors.push(format!("expected expression after {:?}", token));
@@ -287,13 +310,14 @@ impl <'a> Parser<'a> {
         }
         Some(Box::new(InfixExpression {
             token: token.clone(),
-            operator: token.into(),
+            operator: token_as_infix.unwrap(),
             left,
             right: right.unwrap(),
         }))
     }
 
     fn parse_grouped_expression(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_grouped_expression: {:?}", self.cur_token);
         self.next_token();
         let exp = self.parse_expression(Precedence::LOWEST);
         if !self.expect_peek(Token::RPAREN) {
@@ -303,6 +327,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_if_expression(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_if_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
         if !self.expect_peek(Token::LPAREN) {
             return None;
@@ -340,6 +365,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_block_statement(&mut self) -> Option<BlockStatement> {
+        trace!("parse_block_statement: {:?}", self.cur_token);
         let token = self.cur_token.clone();
         let mut statements = Vec::new();
         self.next_token();
@@ -357,6 +383,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_function_literial(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_function_literial: {:?}", self.cur_token);
         let token = self.cur_token.clone();
         if !self.expect_peek(Token::LPAREN) {
             return None;
@@ -380,6 +407,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_function_parameters(&mut self) -> Option<Vec<IdentifierLiteral>> {
+        trace!("parse_function_parameters: {:?}", self.cur_token);
         let mut identifiers = Vec::new();
         if self.peek_token_is(&Token::RPAREN) {
             self.next_token();
@@ -419,6 +447,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_call_expression(&mut self, function: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+        trace!("parse_call_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
         let arguments = self.parse_call_arguments();
         if arguments.is_none() {
@@ -432,6 +461,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_call_arguments(&mut self) -> Option<Vec<Box<dyn Expression>>> {
+        trace!("parse_call_arguments: {:?}", self.cur_token);
         let mut arguments = Vec::new();
         if self.peek_token_is(&Token::RPAREN) {
             self.next_token();
@@ -458,6 +488,25 @@ impl <'a> Parser<'a> {
         Some(arguments)
     }
 
+    fn parse_boolean_literal(&mut self) -> Option<Box<dyn Expression>> {
+        trace!("parse_boolean_literal: {:?}", self.cur_token);
+        let token = self.cur_token.clone();
+        let value = match self.cur_token.clone() {
+            Token::TRUE => Some(true),
+            Token::FALSE => Some(false),
+            _ => None,
+        };
+        if value.is_none() {
+            self.errors.push(format!("could not parse {:?} as boolean", self.cur_token));
+            return None;
+        }
+        Some(Box::new(BooleanLiteral {
+            token,
+            value: value.unwrap(),
+        }))
+        
+    }
+
     fn check_parser_errors(&mut self) {
         if self.errors.len() == 0 {
             return;
@@ -469,3 +518,7 @@ impl <'a> Parser<'a> {
         panic!("parser has {} errors", self.errors.len());
     }
 }
+
+#[cfg(test)]
+#[path = "./parser_tests.rs"]
+mod tests;
