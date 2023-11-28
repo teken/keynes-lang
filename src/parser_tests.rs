@@ -114,20 +114,21 @@ fn test_parsing_prefix_expressions() {
         let program = lex_and_parse(input);
         let actual = format!("{}", program);
         assert_eq!(actual, expected);
+        trace!("{} = {} completed", input, expected);
     }
 }
 
 #[test]
 fn test_parsing_infix_expressions() {
     let tests = vec![
-        ("5 + 5;", "(5 + 5)"),
-        ("5 - 5;", "(5 - 5)"),
-        ("5 * 5;", "(5 * 5)"),
-        ("5 / 5;", "(5 / 5)"),
-        ("5 > 5;", "(5 > 5)"),
-        ("5 < 5;", "(5 < 5)"),
-        ("5 == 5;", "(5 == 5)"),
-        ("5 != 5;", "(5 != 5)"),
+        ("5 + 6;", "(5 + 6)"),
+        ("5 - 6;", "(5 - 6)"),
+        ("5 * 6;", "(5 * 6)"),
+        ("5 / 6;", "(5 / 6)"),
+        ("5 > 6;", "(5 > 6)"),
+        ("5 < 6;", "(5 < 6)"),
+        ("5 == 6;", "(5 == 6)"),
+        ("5 != 6;", "(5 != 6)"),
         ("true == true", "(true == true)"),
         ("true != false", "(true != false)"),
         ("false == false", "(false == false)"),
@@ -137,6 +138,7 @@ fn test_parsing_infix_expressions() {
         let program = lex_and_parse(input);
         let actual = format!("{}", program);
         assert_eq!(actual, expected);
+        trace!("{} = {} completed", input, expected);
     }
 }
 
@@ -175,6 +177,7 @@ fn test_operator_precedence_parsing() {
         let program = lex_and_parse(input);
         let actual = format!("{}", program);
         assert_eq!(actual, expected);
+        trace!("{} = {} completed", input, expected);
     }
 }
 

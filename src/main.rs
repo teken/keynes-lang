@@ -63,7 +63,7 @@ fn parser_single(input: &str) {
     let mut lexer = lexer::Lexer::new(input.to_string());
     let mut parser = parser::Parser::new(&mut lexer);
     let program = parser.parse_program();
-    println!("{:?}", program);
+    println!("{}", program);
 }
 
 fn parser_repl() {
@@ -77,7 +77,7 @@ fn parser_repl() {
         let mut lexer = lexer::Lexer::new(input);
         let mut parser = parser::Parser::new(&mut lexer);
         let program = parser.parse_program();
-        println!("{:?}", program);
+        println!("{}", program);
         println!("====================")
     }
 }

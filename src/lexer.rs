@@ -56,6 +56,8 @@ impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut token = String::new();
         match self {
+            Token::IDENTIFIER(ident) => token.push_str(ident),
+            Token::INTEGER(int) => token.push_str(int),
             Token::ASSIGN => token.push_str("="),
             Token::EQUAL => token.push_str("=="),
             Token::NOT_EQUAL => token.push_str("!="),
