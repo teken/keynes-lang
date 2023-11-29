@@ -85,7 +85,7 @@ impl Display for Token {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Lexer {
     input: String,
     position: usize,

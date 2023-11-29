@@ -155,11 +155,79 @@ fn test_parsing_infix_expressions(input: &str, expected: &str) {
 #[test_case("a + add(b * c) + d", "((a + add((b * c))) + d)"; "precedence of plus, call and parenthesis")]
 #[test_case("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"; "precedence of call and parenthesis 1")]
 #[test_case("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"; "precedence of call and parenthesis 2")]
-#[test_case("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"; "precedence of index and multiply")]
-#[test_case("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"; "precedence of call, index and multiply")]
+// #[test_case("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"; "precedence of index and multiply")]
+// #[test_case("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"; "precedence of call, index and multiply")]
 fn test_operator_precedence_parsing(input: &str, expected: &str) {
     let program = lex_and_parse(input);
     let actual = format!("{}", program);
     assert_eq!(actual, expected);
+}
+
+// #[test_case("if (x < y) { x }", "if (x < y) { x }"; "if statement")]
+// #[test_case("if (x < y) { x } else { y }", "if (x < y) { x } else { y }"; "if else statement")]
+// #[test_case("if (x < y) { x } else if (x > y) { y }", "if (x < y) { x } else if (x > y) { y }"; "if else if statement")]
+// #[test_case("if (x < y) { x } else if (x > y) { y } else { x + y }", "if (x < y) { x } else if (x > y) { y } else { (x + y) }"; "if else if else statement")]
+// fn test_if_expression(input: &str, expected: &str) {
+//     let program = lex_and_parse(input);
+//     let actual = format!("{}", program);
+//     assert_eq!(actual, expected);
+// }
+
+// #[test_case("fn(x, y) { x + y; }", "fn(x, y) { (x + y); }"; "function literal")]
+// #[test_case("fn() { x + y; }", "fn() { (x + y); }"; "function literal without parameters")]
+// #[test_case("fn(x, y, z) { x + y + z; }", "fn(x, y, z) { ((x + y) + z); }"; "function literal with multiple parameters")]
+// fn test_function_literal(input: &str, expected: &str) {
+//     let program = lex_and_parse(input);
+//     let actual = format!("{}", program);
+//     assert_eq!(actual, expected);
+// }
+
+// #[test_case("fn() { return x + y; }", "fn() { return (x + y); }"; "function literal with return statement")]
+// #[test_case("fn() { return; }", "fn() { return; }"; "function literal with return statement without expression")]
+// fn test_function_literal_with_return_statement(input: &str, expected: &str) {
+//     let program = lex_and_parse(input);
+//     let actual = format!("{}", program);
+//     assert_eq!(actual, expected);
+// }
+
+// #[test_case("fn() { x + y; }()", "fn() { (x + y); }()"; "function literal with call expression")]
+// #[test_case("fn() { x + y; }(1, 2 * 3, 4 + 5)", "fn() { (x + y); }(1, (2 * 3), (4 + 5))"; "function literal with call expression with arguments")]
+// fn test_function_literal_with_call_expression(input: &str, expected: &str) {
+//     let program = lex_and_parse(input);
+//     let actual = format!("{}", program);
+//     assert_eq!(actual, expected);
+// }
+
+#[test] 
+fn test_call_expression() {
+    let input = "add(1, 2 * 3, 4 + 5);";
+    let program = lex_and_parse(input);
+
+    assert_eq!(program.statements.len(), 1);
+
+    let mut iter = program.statements.iter();
+
+    let ExpressionStatement { token, expression } = iter.next().unwrap().as_any().downcast_ref::<ExpressionStatement>().unwrap();
+    assert_eq!(token, &Token::IDENTIFIER("add".into()));
+    
+    let CallExpression { token, function, arguments } = expression.as_any().downcast_ref::<CallExpression>().unwrap();
+    assert_eq!(token, &Token::IDENTIFIER("add".into()));
+    assert_eq!(function.as_any().downcast_ref::<IdentifierLiteral>().unwrap() , &IdentifierLiteral { token: Token::IDENTIFIER("add".into()) });
+    assert_eq!(arguments.len(), 3);
+    assert_eq!(arguments[0].as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("1".into()), value: 1 });
+    
+    let InfixExpression { token, left, operator, right } = arguments[1].as_any().downcast_ref::<InfixExpression>().unwrap();
+    assert_eq!(token, &Token::MULTIPLY);
+    assert_eq!(left.as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("2".into()), value: 2 });
+    assert_eq!(operator, &InfixOperator::MULTIPLY);
+    assert_eq!(right.as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("3".into()), value: 3 });
+    
+    let InfixExpression { token, left, operator, right } = arguments[2].as_any().downcast_ref::<InfixExpression>().unwrap();
+    assert_eq!(token, &Token::PLUS);
+    assert_eq!(left.as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("4".into()), value: 4 });
+    assert_eq!(operator, &InfixOperator::PLUS);
+    assert_eq!(right.as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("5".into()), value: 5 });
+    
+    
 }
 

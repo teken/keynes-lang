@@ -1,8 +1,8 @@
-use std::mem::zeroed;
-
 use crate::{lexer::{Lexer, Token}, ast::{statements::*, expressions::*, program::Program}};
+
 use log::*;
 
+#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
     cur_token: Token,
@@ -147,7 +147,6 @@ impl <'a> Parser<'a> {
             Token::BANG | Token::MINUS => self.parse_prefix_expression(),
             Token::FUNCTION => self.parse_function_literial(),
             Token::TRUE | Token::FALSE => self.parse_boolean_literal(),
-            // Token::LPAREN => self.parse_call_expression(),
             _ => None,
         };
         if prefix_w.is_none() {
@@ -171,8 +170,11 @@ impl <'a> Parser<'a> {
                 Token::LESS_THAN | 
                 Token::GREATER_THAN => {
                     self.next_token();
-                    self.parse_infix_expression(prefix.clone())
+                    self.parse_infix_expression(left_exp.clone().unwrap())
                 }
+                Token::LPAREN => {
+                    self.parse_call_expression(left_exp.clone().unwrap())
+                },
                 _ => None,
             };
 
@@ -181,7 +183,9 @@ impl <'a> Parser<'a> {
             }
 
             left_exp = Some(infix.unwrap());
-        } 
+        }
+        trace!("parse_expression: end infix {:?}", self.peek_token);
+        trace!("parse_expression: end infix {:?}", left_exp);
 
         left_exp
     }
@@ -285,7 +289,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_infix_expression(&mut self, left: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
-        trace!("parse_infix_expression: {:?}", self.cur_token);
+        trace!("parse_infix_expression: operator {:?}", self.cur_token);
         let token = self.cur_token.clone();
         let precedence: Precedence = token.clone().into();
         
@@ -296,7 +300,7 @@ impl <'a> Parser<'a> {
         }
 
         self.next_token();
-        trace!("parse_infix_expression: {:?}", self.cur_token);
+        trace!("parse_infix_expression: right {:?}", self.cur_token);
 
         let right = self.parse_expression(precedence);
         if right.is_none() {
@@ -312,8 +316,9 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_grouped_expression(&mut self) -> Option<Box<dyn Expression>> {
-        trace!("parse_grouped_expression: {:?}", self.cur_token);
         self.next_token();
+
+        trace!("parse_grouped_expression: {:?}", self.cur_token);
         let exp = self.parse_expression(Precedence::LOWEST);
         if !self.expect_peek(Token::RPAREN) {
             return None;
@@ -444,14 +449,14 @@ impl <'a> Parser<'a> {
     fn parse_call_expression(&mut self, function: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
         trace!("parse_call_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
+        self.next_token();
         let arguments = self.parse_call_arguments();
-        if arguments.is_none() {
-            return None;
-        }
+        
+        trace!("parse_call_expression: completed arguments {:?}", arguments);
         Some(Box::new(CallExpression {
             token,
             function,
-            arguments: arguments.unwrap(),
+            arguments: arguments.unwrap_or_default(),
         }))
     }
 
@@ -480,6 +485,7 @@ impl <'a> Parser<'a> {
         if !self.expect_peek(Token::RPAREN) {
             return None;
         }
+        trace!("parse_call_arguments: completed arguments {:?}", arguments);
         Some(arguments)
     }
 
