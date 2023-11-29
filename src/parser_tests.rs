@@ -2,6 +2,8 @@
 
 use super::*;
 
+use test_case::test_case;
+
 #[ctor::ctor]
 fn init() {
     dotenv::dotenv().ok();
@@ -101,83 +103,63 @@ fn test_integer_literal_expression() {
     assert_eq!(expression.as_any().downcast_ref::<IntegerLiteral>().unwrap() , &IntegerLiteral { token: Token::INTEGER("5".into()), value: 5 });
 }
 
-#[test]
-fn test_parsing_prefix_expressions() {
-    let tests = vec![
-        ("!5;", "(!5)"),
-        ("-15;", "(-15)"),
-        ("!true;", "(!true)"),
-        ("!false;", "(!false)"),
-    ];
-
-    for (input, expected) in tests {
-        let program = lex_and_parse(input);
-        let actual = format!("{}", program);
-        assert_eq!(actual, expected);
-        trace!("{} = {} completed", input, expected);
-    }
+#[test_case("!5;", "(!5)"; "when number starts with bang")]
+#[test_case("-15;", "(-15)"; "when number starts with minus")]
+#[test_case("!true;", "(!true)"; "when true starts with bang")]
+#[test_case("!false;", "(!false)"; "when false starts with bang")]
+fn test_parsing_prefix_expressions(input: &str, expected: &str) {
+    let program = lex_and_parse(input);
+    let actual = format!("{}", program);
+    assert_eq!(actual, expected);
 }
 
-#[test]
-fn test_parsing_infix_expressions() {
-    let tests = vec![
-        ("5 + 6;", "(5 + 6)"),
-        ("5 - 6;", "(5 - 6)"),
-        ("5 * 6;", "(5 * 6)"),
-        ("5 / 6;", "(5 / 6)"),
-        ("5 > 6;", "(5 > 6)"),
-        ("5 < 6;", "(5 < 6)"),
-        ("5 == 6;", "(5 == 6)"),
-        ("5 != 6;", "(5 != 6)"),
-        ("true == true", "(true == true)"),
-        ("true != false", "(true != false)"),
-        ("false == false", "(false == false)"),
-    ];
-
-    for (input, expected) in tests {
-        let program = lex_and_parse(input);
-        let actual = format!("{}", program);
-        assert_eq!(actual, expected);
-        trace!("{} = {} completed", input, expected);
-    }
+#[test_case("5 + 6;", "(5 + 6)"; "when number plus number")]
+#[test_case("5 - 6;", "(5 - 6)"; "when number minus number")]
+#[test_case("5 * 6;", "(5 * 6)"; "when number multiply number")]
+#[test_case("5 / 6;", "(5 / 6)"; "when number divide number")]
+#[test_case("5 > 6;", "(5 > 6)"; "when number gt number")]
+#[test_case("5 < 6;", "(5 < 6)"; "when number lt number")]
+#[test_case("5 == 6;", "(5 == 6)"; "when number eq number")]
+#[test_case("5 != 6;", "(5 != 6)"; "when number not eq number")]
+#[test_case("true == true", "(true == true)"; "when true eq true")]
+#[test_case("true != false", "(true != false)"; "when true not eq false")]
+#[test_case("false == false", "(false == false)"; "when false eq false")]
+fn test_parsing_infix_expressions(input: &str, expected: &str) {
+    let program = lex_and_parse(input);
+    let actual = format!("{}", program);
+    assert_eq!(actual, expected);
 }
 
-#[test]
-fn test_operator_precedence_parsing() {
-    let tests = vec![
-        ("-a * b", "((-a) * b)"),
-        ("!-a", "(!(-a))"),
-        ("a + b + c", "((a + b) + c)"),
-        ("a + b - c", "((a + b) - c)"),
-        ("a * b * c", "((a * b) * c)"),
-        ("a * b / c", "((a * b) / c)"),
-        ("a + b / c", "(a + (b / c))"),
-        ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
-        ("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
-        ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
-        ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
-        ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
-        ("true", "true"),
-        ("false", "false"),
-        ("3 > 5 == false", "((3 > 5) == false)"),
-        ("3 < 5 == true", "((3 < 5) == true)"),
-        ("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"),
-        ("(5 + 5) * 2", "((5 + 5) * 2)"),
-        ("2 / (5 + 5)", "(2 / (5 + 5))"),
-        ("-(5 + 5)", "(-(5 + 5))"),
-        ("!(true == true)", "(!(true == true))"),
-        ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
-        ("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
-        ("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
-        ("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"),
-        ("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"),
-    ];
 
-    for (input, expected) in tests {
-        let program = lex_and_parse(input);
-        let actual = format!("{}", program);
-        assert_eq!(actual, expected);
-        trace!("{} = {} completed", input, expected);
-    }
+#[test_case("-a * b", "((-a) * b)"; "precedence of minus")]
+#[test_case("!-a", "(!(-a))"; "precedence of bang")]
+#[test_case("a + b + c", "((a + b) + c)"; "precedence of plus")]
+#[test_case("a + b - c", "((a + b) - c)"; "precedence of minus and plus")]
+#[test_case("a * b * c", "((a * b) * c)"; "precedence of multiply")]
+#[test_case("a * b / c", "((a * b) / c)"; "precedence of divide")]
+#[test_case("a + b / c", "(a + (b / c))"; "precedence of plus and divide")]
+#[test_case("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"; "precedence of plus, multiply, divide and minus")]
+#[test_case("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"; "precedence of semicolon")]
+#[test_case("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"; "precedence of gt, eq and lt")]
+#[test_case("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"; "precedence of lt, not eq and gt")]
+#[test_case("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"; "precedence of plus, multiply, eq and plus, multiply")]
+#[test_case("true", "true"; "precedence of true")]
+#[test_case("false", "false"; "precedence of false")]
+#[test_case("3 > 5 == false", "((3 > 5) == false)"; "precedence of gt, eq and false")]
+#[test_case("3 < 5 == true", "((3 < 5) == true)"; "precedence of lt, eq and true")]
+#[test_case("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"; "precedence of plus and parenthesis")]
+#[test_case("(5 + 5) * 2", "((5 + 5) * 2)"; "precedence of plus, parenthesis and multiply")]
+#[test_case("2 / (5 + 5)", "(2 / (5 + 5))"; "precedence of divide, parenthesis and plus")]
+#[test_case("-(5 + 5)", "(-(5 + 5))"; "precedence of minus and parenthesis")]
+#[test_case("!(true == true)", "(!(true == true))"; "precedence of bang and parenthesis")]
+#[test_case("a + add(b * c) + d", "((a + add((b * c))) + d)"; "precedence of plus, call and parenthesis")]
+#[test_case("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"; "precedence of call and parenthesis 1")]
+#[test_case("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"; "precedence of call and parenthesis 2")]
+#[test_case("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"; "precedence of index and multiply")]
+#[test_case("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"; "precedence of call, index and multiply")]
+fn test_operator_precedence_parsing(input: &str, expected: &str) {
+    let program = lex_and_parse(input);
+    let actual = format!("{}", program);
+    assert_eq!(actual, expected);
 }
 

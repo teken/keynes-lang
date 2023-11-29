@@ -1,3 +1,5 @@
+use std::mem::zeroed;
+
 use crate::{lexer::{Lexer, Token}, ast::{statements::*, expressions::*, program::Program}};
 use log::*;
 
@@ -131,7 +133,7 @@ impl <'a> Parser<'a> {
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
-        trace!("parse_expression: {:?}", self.cur_token);
+        trace!("parse_expression: {:?} {:?} {:?}", precedence, self.cur_token, self.peek_token);
 
         let prefix_w = match self.cur_token {
             Token::IDENTIFIER(_) => self.parse_identifier_expression(),
@@ -145,7 +147,7 @@ impl <'a> Parser<'a> {
             _ => None,
         };
         if prefix_w.is_none() {
-            trace!("parse_expression: prefix failed");
+            trace!("parse_expression: prefix failed for {:?}", self.cur_token);
             self.errors.push(format!("unhandled prefix parse for {:?}", self.cur_token));
             return None;
         }
@@ -163,15 +165,16 @@ impl <'a> Parser<'a> {
                 Token::EQUAL | 
                 Token::NOT_EQUAL | 
                 Token::LESS_THAN | 
-                Token::GREATER_THAN => self.parse_infix_expression(prefix.clone()),
+                Token::GREATER_THAN => {
+                    self.next_token();
+                    self.parse_infix_expression(prefix.clone())
+                }
                 _ => None,
             };
 
             if infix.is_none() {
                 return left_exp;
             }
-
-            self.next_token();
 
             left_exp = Some(infix.unwrap());
         }
@@ -284,25 +287,17 @@ impl <'a> Parser<'a> {
     fn parse_infix_expression(&mut self, left: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
         trace!("parse_infix_expression: {:?}", self.cur_token);
         let token = self.cur_token.clone();
-        let precedence: Precedence = self.cur_token.clone().into();
-        self.next_token();
+        let precedence: Precedence = token.clone().into();
+        
         let token_as_infix = token.clone().try_into();
         if token_as_infix.is_err() {
             self.errors.push(format!("expected infix operator, got {:?}", token));
             return None;
         }
-        // let right =  match token_as_infix.clone().unwrap() {
-        //     InfixOperator::PLUS |
-        //     InfixOperator::MINUS |
-        //     InfixOperator::MULTIPLY |
-        //     InfixOperator::DIVIDE |
-        //     InfixOperator::EQUAL |
-        //     InfixOperator::NOT_EQUAL |
-        //     InfixOperator::LESS_THAN |
-        //     InfixOperator::GREATER_THAN => self.parse_expression(precedence.clone().reduce()),
-        //     _ => self.parse_expression(precedence),
-            
-        // };
+
+        self.next_token();
+        trace!("parse_infix_expression: {:?}", self.cur_token);
+
         let right = self.parse_expression(precedence);
         if right.is_none() {
             self.errors.push(format!("expected expression after {:?}", token));
