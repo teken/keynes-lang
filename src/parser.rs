@@ -104,6 +104,10 @@ impl <'a> Parser<'a> {
             return None;
         }
 
+        if self.peek_token_is(&Token::SEMICOLON) {
+            self.next_token();
+        }
+
         trace!("parse_let_statement: expression {:?}", expression);
 
         Some(Box::new(LetStatement {
@@ -177,12 +181,8 @@ impl <'a> Parser<'a> {
             }
 
             left_exp = Some(infix.unwrap());
-        }
+        } 
 
-        self.next_token();
-
-
-        self.check_parser_errors();
         left_exp
     }
 
