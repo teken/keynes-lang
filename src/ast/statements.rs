@@ -104,11 +104,10 @@ impl Statement for BlockStatement {
 impl Display for BlockStatement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut block_statement = String::new();
-        block_statement.push_str(&format!("{} ", self.token));
         for statement in &self.statements {
             block_statement.push_str(&format!("{}", statement));
         }
-        write!(f, "{}", block_statement)
+        write!(f, "{{ {} }}", block_statement)
     }
     
 }

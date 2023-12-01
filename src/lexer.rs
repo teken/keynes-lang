@@ -79,6 +79,17 @@ impl Display for Token {
             Token::RBRACE => token.push_str("}"),
             Token::LBRACKET => token.push_str("["),
             Token::RBRACKET => token.push_str("]"),
+            Token::FUNCTION => token.push_str("fn"),
+            Token::RETURN => token.push_str("return"),
+            Token::MUT => token.push_str("mut"),
+            Token::LET => token.push_str("let"),
+            Token::IF => token.push_str("if"),
+            Token::ELSE => token.push_str("else"),
+            Token::TRUE => token.push_str("true"),
+            Token::FALSE => token.push_str("false"),
+            Token::RUN => token.push_str("run"),
+            Token::SPAWN => token.push_str("spawn"),
+            
             _ => token.push_str(format!("{:?}", self).as_str()),
         }
         write!(f, "{}", token)

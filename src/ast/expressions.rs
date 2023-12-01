@@ -265,10 +265,10 @@ impl Display for IfExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut if_expression = String::new();
         if_expression.push_str(&format!("{} ", self.token));
-        if_expression.push_str(&format!("({}) ", self.condition));
-        if_expression.push_str(&format!("{{{}}} ", self.consequence));
+        if_expression.push_str(&format!("{} ", self.condition));
+        if_expression.push_str(&format!("{}", self.consequence));
         if let Some(alternative) = &self.alternative {
-            if_expression.push_str(&format!("else {{{}}}", alternative));
+            if_expression.push_str(&format!(" else {}", alternative));
         }
         write!(f, "{}", if_expression)
     }

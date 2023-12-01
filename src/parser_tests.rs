@@ -163,24 +163,24 @@ fn test_operator_precedence_parsing(input: &str, expected: &str) {
     assert_eq!(actual, expected);
 }
 
-// #[test_case("if (x < y) { x }", "if (x < y) { x }"; "if statement")]
-// #[test_case("if (x < y) { x } else { y }", "if (x < y) { x } else { y }"; "if else statement")]
+#[test_case("if (x < y) { x }", "if (x < y) { x }"; "if statement")]
+#[test_case("if (x < y) { x } else { y }", "if (x < y) { x } else { y }"; "if else statement")]
 // #[test_case("if (x < y) { x } else if (x > y) { y }", "if (x < y) { x } else if (x > y) { y }"; "if else if statement")]
 // #[test_case("if (x < y) { x } else if (x > y) { y } else { x + y }", "if (x < y) { x } else if (x > y) { y } else { (x + y) }"; "if else if else statement")]
-// fn test_if_expression(input: &str, expected: &str) {
-//     let program = lex_and_parse(input);
-//     let actual = format!("{}", program);
-//     assert_eq!(actual, expected);
-// }
+fn test_if_expression(input: &str, expected: &str) {
+    let program = lex_and_parse(input);
+    let actual = format!("{}", program);
+    assert_eq!(actual, expected);
+}
 
-// #[test_case("fn(x, y) { x + y; }", "fn(x, y) { (x + y); }"; "function literal")]
-// #[test_case("fn() { x + y; }", "fn() { (x + y); }"; "function literal without parameters")]
-// #[test_case("fn(x, y, z) { x + y + z; }", "fn(x, y, z) { ((x + y) + z); }"; "function literal with multiple parameters")]
-// fn test_function_literal(input: &str, expected: &str) {
-//     let program = lex_and_parse(input);
-//     let actual = format!("{}", program);
-//     assert_eq!(actual, expected);
-// }
+#[test_case("fn(x, y) { x + y; }", "fn(x, y) { (x + y); }"; "function literal")]
+#[test_case("fn() { x + y; }", "fn() { (x + y); }"; "function literal without parameters")]
+#[test_case("fn(x, y, z) { x + y + z; }", "fn(x, y, z) { ((x + y) + z); }"; "function literal with multiple parameters")]
+fn test_function_literal(input: &str, expected: &str) {
+    let program = lex_and_parse(input);
+    let actual = format!("{}", program);
+    assert_eq!(actual, expected);
+}
 
 // #[test_case("fn() { return x + y; }", "fn() { return (x + y); }"; "function literal with return statement")]
 // #[test_case("fn() { return; }", "fn() { return; }"; "function literal with return statement without expression")]
