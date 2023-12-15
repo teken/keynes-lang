@@ -4,21 +4,21 @@ use nom::{
     branch::alt,
     IResult,
     combinator::{
-        opt,
+        opt, map,
     },
-    
     bytes::complete::{
         tag_no_case,
-        take_while1, take_while,
+        tag,
+        take_while1, take_while, take,
     },
     character::complete::{
         multispace0,
         multispace1,
-    }, multi::many0
+    }, multi::many1
 };
 
 pub fn parse_program(input: &str) -> IResult<&str, Program> {
-    let (input, statements) = many0(parse_statment)(input)?;
+    let (input, statements) = many1(parse_statment)(input)?;
     Ok((input, Program {
         statements
     }))
@@ -27,7 +27,7 @@ pub fn parse_program(input: &str) -> IResult<&str, Program> {
 fn parse_statment(input: &str) -> IResult<&str, Box<dyn Statement>> {
     Ok(alt((
         parse_let_statement,
-        // parse_return_statement,
+        parse_return_statement,
         // parse_expression_statement
     ))(input)?)
 }
@@ -49,6 +49,13 @@ fn parse_let_statement(input: &str) -> IResult<&str, Box<dyn Statement>> {
         { mutable: mutable.is_some(), name, value })))
 }
 
+fn parse_return_statement(input: &str) -> IResult<&str, Box<dyn Statement>> {
+    let (input, _) = tag_no_case("return")(input)?;
+    let (input, _) = multispace1(input)?;
+    let (input, value) = parse_expression(input)?;
+    Ok((input, Box::new(ReturnStatement { value })))
+}
+
 fn parse_identifier(input: &str) -> IResult<&str, IdentifierLiteral> {
     let (input, name) = take_while1(|c: char| c.is_alphanumeric())(input)?;
     Ok((input, IdentifierLiteral { name: name.to_string() }))
@@ -64,8 +71,21 @@ fn parse_integer(input: &str) -> IResult<&str, IntegerLiteral> {
     }))
 }
 
+fn parse_boolean(input: &str) -> IResult<&str, BooleanLiteral> {
+    let (input, exp) = alt((
+        map(tag("true"), |_| BooleanLiteral { value: true }),
+        map(tag("false"), |_| BooleanLiteral { value: false })
+    ))(input)?;
+    Ok((input, exp))
+}
+
 fn parse_expression(input: &str) -> IResult<&str, Box<dyn Expression>> {
-    Ok((input, Box::new(IntegerLiteral{value: "1".to_string(), length: "8".to_string()})))
+    let (input, exp) = alt((
+        map(parse_integer, |e| Box::new(e) as Box<dyn Expression>),
+        map(parse_boolean, |e| Box::new(e) as Box<dyn Expression>),
+        map(parse_identifier, |e| Box::new(e) as Box<dyn Expression>),
+    ))(input)?;
+    Ok((input, exp))
 }
 
 #[derive(Debug)]
@@ -84,6 +104,13 @@ pub struct IntegerLiteral {
 impl Expression for IntegerLiteral {}
 
 #[derive(Debug)]
+pub struct BooleanLiteral {
+    value: bool
+}
+
+impl Expression for BooleanLiteral {}
+
+#[derive(Debug)]
 pub struct LetStatement {
     name: IdentifierLiteral,
     mutable: bool,
@@ -91,6 +118,13 @@ pub struct LetStatement {
 }
 
 impl Statement for LetStatement {}
+
+#[derive(Debug)]
+pub struct ReturnStatement {
+    value: Box<dyn Expression>
+}
+
+impl Statement for ReturnStatement {}
 
 #[derive(Debug)]
 pub struct Program {

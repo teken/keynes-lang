@@ -105,7 +105,7 @@ fn parser2_repl() {
         print!(">> ");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
-        let mut result = parser2::parse_program(input);
+        let mut result = parser2::parse_program(input.as_str());
         match result {
             Ok((_,program)) => println!("{:?}", program),
             Err(err) => println!("{:?}", err),
