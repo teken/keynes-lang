@@ -30,9 +30,7 @@ impl Display for IntegerLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
     }
-    
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IdentifierLiteral {
@@ -118,20 +116,6 @@ pub enum Precedence {
     PRODUCT     ,// *
     PREFIX      ,// -X or !X
     CALL        ,// myFunction(X)
-}
-
-impl Precedence {
-    pub fn reduce(self) -> Precedence {
-        match self {
-            Precedence::EQUALS => Precedence::LOWEST,
-            Precedence::LESSGREATER => Precedence::EQUALS,
-            Precedence::SUM => Precedence::LESSGREATER,
-            Precedence::PRODUCT => Precedence::SUM,
-            Precedence::PREFIX => Precedence::PRODUCT,
-            Precedence::CALL => Precedence::PREFIX,
-            Precedence::LOWEST => Precedence::LOWEST,
-        }
-    }
 }
 
 impl From<Token> for Precedence {
