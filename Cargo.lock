@@ -183,6 +183,7 @@ dependencies = [
  "env_logger",
  "log",
  "nom",
+ "nom-7-precedence",
  "test-case",
 ]
 
@@ -224,6 +225,14 @@ checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
 dependencies = [
  "memchr",
  "minimal-lexical",
+]
+
+[[package]]
+name = "nom-7-precedence"
+version = "0.1.0"
+source = "git+https://github.com/mullr/nom-7-precedence#471eaf3cc91ee82b5844898144ae482db7e613e0"
+dependencies = [
+ "nom",
 ]
 
 [[package]]
