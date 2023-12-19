@@ -1,11 +1,14 @@
 
 use clap::{command, arg};
 use dotenv;
+use parser2::program::parse_program;
 
 mod lexer;
 mod ast;
+mod ast2;
 mod parser;
 mod parser2;
+
 
 fn main() {
     dotenv::dotenv().ok();
@@ -90,10 +93,10 @@ fn parser_repl() {
 }
 
 fn parser2_single(input: &str) {
-    let mut result = parser2::parse_program(input);
+    let result = parse_program(input);
     match result {
         Ok((_,program)) => println!("{:?}", program),
-        Err(err) => println!("{:?}", err),
+        Err(err) => println!("{}", err),
     }
 }
 
@@ -105,10 +108,10 @@ fn parser2_repl() {
         print!(">> ");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
-        let mut result = parser2::parse_program(input.as_str());
+        let result = parse_program(input.as_str());
         match result {
             Ok((_,program)) => println!("{:?}", program),
-            Err(err) => println!("{:?}", err),
+            Err(err) => println!("{}", err),
         }
         println!("====================")
     }
